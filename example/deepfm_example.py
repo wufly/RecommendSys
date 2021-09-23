@@ -26,6 +26,5 @@ if __name__ == "__main__":
     ]
 
     model = deepfm(feature_columns, linear_features_column_names, fm_feature_column_names)
-    print(model.summary())
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=tf.metrics.AUC(name='auc'))
     model.fit(train_data, epochs=5, validation_data=test_data, verbose=1)
