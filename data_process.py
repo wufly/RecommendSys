@@ -18,14 +18,14 @@ def parse_data(line):
                 ids = tf.reshape(ids, shape=[-1])
                 val = tf.reshape(val, shape=[-1])
                 if feat_col.sub_dtype != 'string':
-                    ids = tf.strings.to_number(ids, out_type=tf.int64)
+                    ids = tf.strings.to_number(ids, out_type=tf.int32)
                 feature_dict[feat_col.name] = ids
                 feature_dict[feat_col.weight_name] = tf.strings.to_number(val, out_type='float32')
             else:
                 ids = tf.strings.split([parsed_data[feat_col.name]], ',').values[:feat_col.max_len]
                 ids = tf.reshape(ids, shape=[-1])
                 if feat_col.sub_dtype != 'string':
-                    ids = tf.strings.to_number(ids, out_type=tf.int64)
+                    ids = tf.strings.to_number(ids, out_type=tf.int32)
                 feature_dict[feat_col.name] = ids
 
         elif isinstance(feat_col, (DenseFeat, SparseFeat)):
@@ -49,14 +49,14 @@ def padding_data():
     for feat_col in feature_columns:
         if isinstance(feat_col, VarLenFeat):
             pad_shape[feat_col.name] = tf.TensorShape([feat_col.max_len])
-            pad_value[feat_col.name] = '' if feat_col.sub_dtype == 'string' else 0
+            pad_value[feat_col.name] = '0' if feat_col.sub_dtype == 'string' else 0
             if feat_col.weight_name:
                 pad_shape[feat_col.weight_name] = tf.TensorShape([feat_col.max_len])
                 pad_value[feat_col.weight_name] = tf.constant(0, dtype=tf.float32)
 
         elif isinstance(feat_col, (DenseFeat, SparseFeat, BucketFeat)):
             pad_shape[feat_col.name] = tf.TensorShape([])
-            pad_value[feat_col.name] = '' if feat_col.sub_dtype == 'string' else 0
+            pad_value[feat_col.name] = '0' if feat_col.dtype == 'string' else 0
 
         else:
             raise Exception('unknown feature column in padding_data {}'.format(feat_col.name))
@@ -71,6 +71,3 @@ if __name__ == '__main__':
     dataset = tf.data.TextLineDataset('./dataset/rank_test_data.tsv', num_parallel_reads=4).skip(1)
     dataset = dataset.take(5).map(parse_data, num_parallel_calls=20)
     print(list(dataset))
-
-
-

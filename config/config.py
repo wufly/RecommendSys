@@ -50,10 +50,16 @@ DICT_CATEGORICAL = {
                 65043, 65091, 65092, 65093, 65094, 65095, 65096, 65097, 65098, 65099, 65100, 71001, 71002, 71003, 71004, 71005, 71006,
                 71007, 71008, 71009, 71010, 71011, 71012, 71013, 71014, 71015, 71016, 71017, 71018, 71019, 71020, 71021, 71022, 71023,
                 71024, 71025, 81000, 82000],
-    'category_id': [i for i in range(500)]
+    'category_id': [i for i in range(1, 500)]
 }
 BOUNDARIES = {
     'distance': [1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 35, 40],
     'salary': [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 15000, 20000],
     'age': [0, 16, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65]
 }
+COL_NAME = ['label', 'user_id', 'job_id', 'distance', 'employer_tag', 'hightlighttag', 'salary_min', 'salary_max', 'active_tag',
+            'company_id', 'gender', 'age', 'marriage', 'new_channel_no', 'expect_salary_min', 'expect_salary_max', 'fast_job_status',
+            'expect_job', 'accommodation_schedule', 'city_id', 'past_experience', 'category_id']
+DEFAULT_VALUE = [[0], [0], [0], [0.0], ['0'], ['0'], [0], [0], ['0'], [0], [0], [0], [0], ['0'], [0], [0], [0], ['0'], [0], [0], ['0'], [0]]
+MASKS = [0, 0, 0, 0.0, '0', '0', 0, 0, '0', 0, 0, 0, 0, '0', 0, 0, 0, 0, 0, 0, 0, 0]
+MASK_VALUE = dict(zip(COL_NAME[1:], MASKS[1:]))

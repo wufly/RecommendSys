@@ -14,6 +14,8 @@ class VocabularyLayer(Layer):
         self.table = tf.lookup.StaticHashTable(tf.lookup.KeyValueTensorInitializer(keys, val), 1)
 
     def call(self, inputs, **kwargs):
+        if inputs.dtype != 'string':
+            inputs = tf.cast(inputs, tf.int32)
         idx = self.table.lookup(inputs)
         if self.mask_value:
             mask = tf.not_equal(inputs, tf.constant(self.mask_value, dtype=inputs.dtype))
@@ -41,7 +43,7 @@ class HashLayer(Layer):
             inputs = tf.as_string(inputs)
         hash_x = tf.strings.to_hash_bucket_fast(inputs, num_buckets)
         if self.mask_zero:
-            masks = tf.cast(tf.not_equal(zeros, inputs), tf.int32)
+            masks = tf.cast(tf.not_equal(zeros, inputs), tf.int64)
             hash_x = (hash_x + 1) * masks
         return hash_x
 
@@ -153,6 +155,3 @@ class FMLayer(Layer):
 
     def compute_output_shape(self, input_shape):
         return None, 1
-
-
-
