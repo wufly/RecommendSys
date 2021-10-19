@@ -1,7 +1,6 @@
 import tensorflow as tf
 from data_process import parse_data, padding_data
 from feature_columns import feature_columns
-from tensorflow.keras.layers import *
 from models.deepfm import deepfm
 
 
