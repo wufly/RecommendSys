@@ -24,6 +24,6 @@ if __name__ == "__main__":
         'age', 'new_channel_no', 'expect_salary_min', 'expect_salary_max', 'fast_job_status', 'expect_job', 'city_id', 'category_id'
     ]
 
-    model = pnn(feature_columns, linear_features_column_names)
+    model = pnn(feature_columns, linear_features_column_names, product_type='outer')
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=tf.metrics.AUC(name='auc'))
     model.fit(train_data, epochs=5, validation_data=test_data, verbose=1)
