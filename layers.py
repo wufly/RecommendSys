@@ -155,3 +155,108 @@ class FMLayer(Layer):
 
     def compute_output_shape(self, input_shape):
         return None, 1
+
+
+class Dice(Layer):
+
+    def __init__(self, **kwargs):
+        super(Dice, self).__init__(**kwargs)
+        self.bn_layer = BatchNormalization()
+        self.alpha = self.add_weight(name='alpha', shape=(1, ), trainable=True)
+
+    def call(self, inputs, **kwargs):
+        x = inputs
+        x = tf.nn.sigmoid(self.bn_layer(x))
+        output = x * inputs + self.alpha * (1 - x) * inputs
+        return output
+
+
+def activation_layer(activation):
+    if activation in ('dice', 'Dice'):
+        act_layer = Dice()
+    elif isinstance(activation, str):
+        act_layer = tf.keras.layers.Activation(activation)
+    elif issubclass(activation, Layer):
+        act_layer = activation()
+    else:
+        raise ValueError("Invalid activation,found %s.You should use a str or a Activation Layer Class." % activation)
+    return act_layer
+
+
+class DNN(Layer):
+
+    def __init__(self, hidden_units, activation='relu', l2_reg=0, dropout_rate=0, use_bn=False, output_activation=None,
+                 seed=1024, **kwargs):
+        super(DNN, self).__init__(**kwargs)
+        self.hidden_units = hidden_units
+        self.activation = activation
+        self.l2_reg = l2_reg
+        self.dropout_rate = dropout_rate
+        self.use_bn = use_bn
+        self.output_activation = output_activation
+        self.seed = seed
+        self.kernels = None
+        self.bias = None
+        self.bn_layer = None
+        self.dropout_layer = None
+        self.activation_layer = None
+
+    def build(self, input_shape):
+        input_size = input_shape[-1]
+        hidden_units = [int(input_size)] + list(self.hidden_units)
+        self.kernels = [self.add_weight(
+            name='kernel' + str(i),
+            shape=(hidden_units[i], hidden_units[i+1]),
+            initializer=tf.initializers.glorot_normal(self.seed),
+            regularizer=tf.keras.regularizers.l2(self.l2_reg),
+            trainable=True) for i in range(len(hidden_units) - 1)]
+        self.bias = [self.add_weight(
+            name='bias' + str(i),
+            shape=(self.hidden_units[i], ),
+            initializer=tf.initializers.Zeros(),
+            trainable=True
+        ) for i in range(len(self.hidden_units))]
+
+        if self.use_bn:
+            self.bn_layer = [BatchNormalization() for _ in range(len(self.hidden_units))]
+
+        self.dropout_layer = [Dropout(self.dropout_rate, seed=self.seed + i) for i in range(len(hidden_units))]
+
+        self.activation_layer = [activation_layer(self.activation) for _ in range(len(self.hidden_units))]
+        if self.output_activation:
+            self.activation_layer[-1] = activation_layer(self.output_activation)
+        
+        super(DNN, self).build(input_shape)
+        
+    def call(self, inputs, training=None, **kwargs):
+        deep_inputs = inputs
+        for i in range(len(self.hidden_units)):
+            fc = tf.nn.bias_add(tf.tensordot(deep_inputs, self.kernels[i], axes=(-1, 0)), self.bias[i])
+            
+            if self.use_bn:
+                fc = self.bn_layer[i](fc, training=training)
+                
+            try:
+                fc = self.activation_layer[i](fc, training=training)
+            except TypeError: # call() got an unexpected keyword argument 'training'
+                fc = self.activation_layer[i](fc)
+            
+            fc = self.dropout_layer[i](fc, training=training)
+            deep_inputs = fc
+        
+        return deep_inputs
+    
+    def compute_output_shape(self, input_shape):
+        if len(self.hidden_units) > 0:
+            shape = input_shape[:-1] + (self.hidden_units[-1], )
+        else:
+            shape = input_shape
+        return tuple(input_shape)
+    
+    def get_config(self):
+        base_config = super(DNN, self).get_config()
+        config = {'activation': self.activation, 'hidden_units': self.hidden_units,
+                  'l2_reg': self.l2_reg, 'use_bn': self.use_bn, 'dropout_rate': self.dropout_rate,
+                  'output_activation': self.output_activation, 'seed': self.seed}
+        base_config.update(config)
+        return base_config
