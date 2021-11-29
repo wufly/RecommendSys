@@ -1,4 +1,6 @@
 *.tsv
 /dataset/
 *.udb
-
+get_data.py
+*/.idea/*
+*/__pycache__/*

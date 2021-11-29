@@ -6,7 +6,7 @@ from tensorflow.python.ops.gen_math_ops import bucketize
 
 def parse_data(line):
 
-    csv_data = tf.io.decode_csv(line, record_defaults=DEFAULT_VALUE, field_delim='\t')
+    csv_data = tf.io.decode_csv(line, record_defaults=DEFAULT_VALUE, field_delim='\t', use_quote_delim=False)
     parsed_data = dict(zip(COL_NAME, csv_data))
     feature_dict = {}
     for feat_col in feature_columns:
@@ -68,6 +68,6 @@ def padding_data():
 
 
 if __name__ == '__main__':
-    dataset = tf.data.TextLineDataset('./dataset/rank_test_data.tsv', num_parallel_reads=4).skip(1)
-    dataset = dataset.take(5).map(parse_data, num_parallel_calls=20)
+    dataset = tf.data.TextLineDataset('./dataset/rank_train_data.tsv', num_parallel_reads=4).skip(1)
+    dataset = dataset.take(5).map(parse_data, num_parallel_calls=1)
     print(list(dataset))
